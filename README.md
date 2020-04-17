@@ -6,6 +6,18 @@ We tried using [turnip.exchange](turnip.exchange) to manage this but ran into pe
 # Commands
 This bot prefixes all commands with '!', but this can be easily changed in [helpMessages.py](bot/helpMessages.py).
 
+- [Managing an Island Queue](#managing-an-island-queue)
+  - [Create](#create)
+  - [Close](#close)
+  - [Remove](#remove)
+- [Participating in an Island Queue](#participating-in-an-island-queue)
+  - [Join](#join)
+  - [Leave](#leave)
+- [General Commands](#general-commands)
+  - [Island](#island)
+  - [Queue](#queue)
+  - [Help](#help)
+
 ## Managing an Island Queue
 
 ### Create
