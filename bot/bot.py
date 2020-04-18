@@ -26,7 +26,7 @@ except ValueError:
 bot = commands.Bot(command_prefix=helpMessages.COMMAND_PREFIX)
 bot.remove_command('help')
 
-DEBUG = True
+DEBUG = False
 ISLANDS = []
 
 @bot.event
