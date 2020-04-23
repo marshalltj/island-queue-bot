@@ -8,26 +8,26 @@ Island owners can choose the number of users they want to let in at a given time
 **Table of Contents**
 - [Commands](#commands)
 - [Installing the Bot](#installing-the-bot)
-- [Create your Bot on Discord](#create-your-bot-on-discord)
-- [Add the Bot to your Server](#add-the-bot-to-your-server)
-- [Running the Bot Locally](#running-the-bot-locally)
-- [Hosting the Bot on Heroku](#hosting-the-bot-on-heroku)
+  - [Create your Bot on Discord](#create-your-bot-on-discord)
+  - [Add the Bot to your Server](#add-the-bot-to-your-server)
+  - [Running the Bot Locally](#running-the-bot-locally)
+  - [Hosting the Bot on Heroku](#hosting-the-bot-on-heroku)
 
 # Commands
 This bot prefixes all commands with '!', but this can be easily changed in [helpMessages.py](bot/helpMessages.py).
 
 **Commands Quicklinks**
 - [Managing an Island Queue](#managing-an-island-queue)
-- [Create](#create)
-- [Close](#close)
-- [Remove](#remove)
+  - [Create](#create)
+  - [Close](#close)
+  - [Remove](#remove)
 - [Participating in an Island Queue](#participating-in-an-island-queue)
-- [Join](#join)
-- [Leave](#leave)
+  - [Join](#join)
+  - [Leave](#leave)
 - [General Commands](#general-commands)
-- [Island](#island)
-- [Queue](#queue)
-- [Help](#help)
+  - [Island](#island)
+  - [Queue](#queue)
+  - [Help](#help)
 
 ## Managing an Island Queue
 
@@ -149,24 +149,24 @@ This bot is coded to manage a single server, so you will need to install it your
 - Clone this repository locally and navigate to the [bot](bot/) folder in your command line.
 - Fill in the values in your [.env](bot/.env) file - these values should be directly pasted after the `=` with no additional characters.
 - `DISCORD_TOKEN` is your bot's token.
-> You can get your bot's token from the [the Discord Developer Portal](https://discordapp.com/developers/applications) by opening your bot application, navigating to the "Bot" tab and copying the "Token". **DO NOT** share this token or post it anywhere publicly.
+  > You can get your bot's token from the [the Discord Developer Portal](https://discordapp.com/developers/applications) by opening your bot application, navigating to the "Bot" tab and copying the "Token". **DO NOT** share this token or post it anywhere publicly.
 
 - `TURNIP_CHANNEL` is the channel ID the bot will post messages about island queues that were created with a `<bell price>` included.
 
->You can get the ID for a Discord channel by changing your settings to developer mode in User Settings -> Appearance -> Enable Developer Mode
+  >You can get the ID for a Discord channel by changing your settings to developer mode in User Settings -> Appearance -> Enable Developer Mode
 
 - `GENERAL_CHANNEL` is the channel ID the bot will post messages about island queues that did not include a `<bell price>`.
 
->If you want the bot to only post to one channel, simply set both `TURNIP_CHANNEL` and `GENERAL_CHANNEL` to the same ID. You can also leave these fields blank but it's not advised.
+  >If you want the bot to only post to one channel, simply set both `TURNIP_CHANNEL` and `GENERAL_CHANNEL` to the same ID. You can also leave these fields blank but it's not advised.
 
 - Install discord.py and dotenv with [pip](https://realpython.com/what-is-pip/):
 
-pip install -U discord.py
-pip install -U python-dotenv
+      pip install -U discord.py
+      pip install -U python-dotenv
 
 - Run the bot (requires Python 3.6 or greater):
 
-python bot.py
+      python bot.py
 
 You should now see the bot come online on your server! Note that this is just locally running the bot, so if you close your command line or computer the bot will go offline. I recommend hosting the bot on a cloud server - see the next section for insturctions on how to do that.
 
@@ -184,8 +184,8 @@ There are many different hosting options, I was able to host my instance of the 
 
 - Create a new directory outside of the cloned island-queue-bot BitBucket repository and run the following commands:
 
-heroku login
-heroku git:clone -a island-queue-bot
+      heroku login
+      heroku git:clone -a island-queue-bot
 
 > If you named your application on heroku something else use that instead of `island-queue-bot`.
 
@@ -193,7 +193,7 @@ heroku git:clone -a island-queue-bot
 
 - Add and commit all the files (don't forget .env) and push using:
 
-git push heroku master
+      git push heroku master
 
 ### Running the Bot on Heroku
 Once it's finished installing on the command line, go back to your application on the Heroku website and go to the "Resources" tab for your app. You'll see a slider with a price to the right of it and a pencil icon. Click the pencil icon then turn the slider on to start running your bot.
