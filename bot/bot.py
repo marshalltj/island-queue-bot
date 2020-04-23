@@ -162,7 +162,7 @@ async def closeQueue(ctx):
     print("Island queue deleted for", owner, "id:", removedIslandID)
         
 
-#Command to remove a Visitor in <position> of a queue from an Island and then message the user that they were removed.
+#Command to remove a user in <position> of a queue from an Island and then message the user that they were removed.
 #Parameters: <ctx : discord.ext.commands.Context> <position : int>
 @bot.command(name='remove')
 async def removeUser(ctx, position : int):
@@ -180,7 +180,7 @@ async def removeUser(ctx, position : int):
 
     removedUser = island.popUser(idx) 
 
-    #check if Visitor was successfully removed
+    #check if user was successfully removed
     if island.getUserPositionInQueue(removedUser) != -1:
         await ctx.send(f"Failed to remove {removedUser.name} from {owner.name}'s queue.")
         print("Failed to remove", removedUser, "from island", island.islandId)
@@ -202,7 +202,7 @@ async def removeUser(ctx, position : int):
             f"Hello {newUser.name}, it's your turn to go to {island.owner.name}'s island! Use the Dodo code '{island.code}' to fly, and be sure to message this bot with '{helpMessages.COMMAND_PREFIX}leave island{island.islandId}' once you are done and completely off their island."
         )
 
-#Command to add a Visitor to an Island
+#Command to add a user to an Island
 #Paramters: <ctx : discord.ext.commands.Context> <islandId : str>
 @bot.command(name='join')
 async def joinQueue(ctx, islandId):
@@ -226,7 +226,7 @@ async def joinQueue(ctx, islandId):
     island.addUser(user)
     queuePosition = island.getUserPositionInQueue(user)
 
-    #check if Visitor was sucessfully added
+    #check if user was sucessfully added
     if queuePosition == -1:
         await ctx.send(f"Failed to add {user.name} to {island.owner.name}'s queue.")
         print("Failed to add", user.name, "to island", island.id)
@@ -242,7 +242,7 @@ async def joinQueue(ctx, islandId):
             f"Hello {user.name}, it's your turn to go to {island.owner.name}'s island! Use the Dodo code '{island.code}' to fly, and be sure to message this bot or post in a channel it's in with '{helpMessages.COMMAND_PREFIX}leave island{island.islandId}' once you are done and completely off their island."
         )
 
-#Command to remove a Visitor from an Island
+#Command to remove a user from an Island
 #Parameters: <ctx : discord.ext.commands.Context> <islandId : str>
 @bot.command(name='leave')
 async def leaveQueue(ctx, islandId):
@@ -261,7 +261,7 @@ async def leaveQueue(ctx, islandId):
 
     island.removeUser(user)
 
-    #check if Visitor was successfully removed
+    #check if user was successfully removed
     if island.getUserPositionInQueue(user) != -1:
         await ctx.send(f"Failed to remove {user.name} from {island.owner.name}'s queue.")
         print("Failed to remove", user, "from island", island.islandId)
@@ -278,7 +278,7 @@ async def leaveQueue(ctx, islandId):
             f"Hello {newUser.name}, it's your turn to go to {island.owner.name}'s island! Use the Dodo code '{island.code}' to fly, and be sure to message this bot with '{helpMessages.COMMAND_PREFIX}leave island{island.islandId}' once you are done and completely off their island."
         )
 
-#Command to display information about an Island as well as each Visitor on the Island
+#Command to display information about an Island as well as each user on the Island
 #Parameters: <ctx : discord.ext.commands.Context> <islandId : str>
 @bot.command(name='queue')
 async def listQueue(ctx, islandId):
