@@ -187,7 +187,7 @@ There are many different hosting options, I was able to host my instance of the 
       heroku login
       heroku git:clone -a island-queue-bot
 
-> If you named your application on heroku something else use that instead of `island-queue-bot`.
+  > If you named your application on heroku something else use that instead of `island-queue-bot`.
 
 - Navigate back to the BitBucket repository and copy everything from your [bot](/bot) and [herokuPipelineFiles](/herokuPipelineFiles) to the new Heroku Git repository.
 
