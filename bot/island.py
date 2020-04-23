@@ -1,26 +1,32 @@
+from visitor import Visitor
+
 class Island:
-    def __init__(self, owner, price, users, code, islandId, queueSize):
+    def __init__(self, owner, price, code, islandId, queueSize):
         self.owner = owner
         self.price = price
-        self.users = users
         self.code = code
         self.islandId = islandId
         self.queueSize = queueSize
+        self.visitors = []
 
-    def getNumUsers(self):
-        return len(self.users)
+    def getNumVisitors(self):
+        return len(self.visitors)
 
-    def addUser(self, user):
-        self.users.append(user)
+    def addVisitor(self, visitor, trips):
+        self.visitors.append(Visitor(visitor, trips))
 
     def removeUser(self, user):
-        self.users.remove(user)
+        for visitor in self.visitors:
+            if visitor.user == user:
+                self.visitors.remove(visitor)
+                return True
+        return False
 
-    def popUser(self, idx):
-        return self.users.pop(idx)
+    def popVisitor(self, idx):
+        return self.visitors.pop(idx)
 
     def getUserPositionInQueue(self, user):
-        for i in range(self.getNumUsers()):
-            if self.users[i] == user:
+        for i in range(self.getNumVisitors()):
+            if self.visitors[i].user == user:
                 return i
         return -1
