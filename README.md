@@ -185,13 +185,13 @@ This bot is coded to manage a single server, so you will need to install it your
 - Clone this repository locally and navigate to the [bot](bot/) folder in your command line.
 - Fill in the values in your [.env](bot/.env) file - these values should be directly pasted after the `=` with no additional characters.
    - `DISCORD_TOKEN` is your bot's token.
-    > You can get your bot's token from the [the Discord Developer Portal](https://discordapp.com/developers/applications) by opening your bot application, navigating to the "Bot" tab and copying the "Token". **DO NOT** share this token or post it anywhere publicly.
+      > You can get your bot's token from the [the Discord Developer Portal](https://discordapp.com/developers/applications) by opening your bot application, navigating to the "Bot" tab and copying the "Token". **DO NOT** share this token or post it anywhere publicly.
 
    - `TURNIP_CHANNEL` is the channel ID the bot will post messages about island queues that were created with a `<bell price>` included.
-    >You can get the ID for a Discord channel by changing your settings to developer mode in User Settings -> Appearance -> Enable Developer Mode
+      >You can get the ID for a Discord channel by changing your settings to developer mode in User Settings -> Appearance -> Enable Developer Mode
 
    - `GENERAL_CHANNEL` is the channel ID the bot will post messages about island queues that did not include a `<bell price>`.
-    >If you want the bot to only post to one channel, simply set both `TURNIP_CHANNEL` and `GENERAL_CHANNEL` to the same ID. You can also leave these fields blank but it's not advised.
+      >If you want the bot to only post to one channel, simply set both `TURNIP_CHANNEL` and `GENERAL_CHANNEL` to the same ID. You can also leave these fields blank but it's not advised.
 
 - Install discord.py and dotenv with [pip](https://realpython.com/what-is-pip/):
 
