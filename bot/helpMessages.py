@@ -1,3 +1,13 @@
+"""
+Animal Crossing New Horizons Island Queue Discord Bot
+Author: Marshall Jankovsky
+github.com/marshalltj/island-queue-bot
+
+Version: 1.1.0
+
+helpMessages.py contains strings used for the !help command to keep bot.py cleaner. It also is where the COMMAND_PREFIX can be changed.
+"""
+
 COMMAND_PREFIX="!"
 
 MENU="```Island Queue Bot" + \
