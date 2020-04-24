@@ -43,7 +43,7 @@ ISLANDS = [] #global list containing all active island queues
 @bot.event
 async def on_ready():
     print(f"{bot.user} is up and running.\nConnected to {bot.guilds[0]}\nSending turnip queues to {TURNIP_CHANNEL}\nSending general queues to {GENERAL_CHANNEL}")
-    await bot.change_presence(activity=discord.Game("!help | github.com/marshalltj/island-queue-bot"))
+    await bot.change_presence(activity=discord.Game(f"{helpMessages.COMMAND_PREFIX}help | github.com/marshalltj/island-queue-bot"))
 
 #---Helper Funtions---#
 
