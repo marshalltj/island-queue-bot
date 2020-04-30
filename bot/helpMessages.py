@@ -3,7 +3,7 @@ Animal Crossing New Horizons Island Queue Discord Bot
 Author: Marshall Jankovsky
 github.com/marshalltj/island-queue-bot
 
-Version: 1.1.0
+Version: 1.2.0
 
 helpMessages.py contains strings used for the !help command to keep bot.py cleaner. It also is where the COMMAND_PREFIX can be changed.
 """
@@ -15,6 +15,7 @@ MENU="```Island Queue Bot" + \
 "\n  create    Create a queue for your island (DM only command)" + \
 "\n  close     Close your island queue" + \
 "\n  remove    Remove someone from a position in your island queue" + \
+"\n  update    Updates the Dodo code for your island" + \
 "\nCommands for Participating in a Queue:" + \
 "\n  join      Join an island queue" + \
 "\n  leave     Leave an island queue" + \
@@ -40,6 +41,12 @@ f"\n\nUsage: {COMMAND_PREFIX}close <island ID (Optional)>" + \
 REMOVE="```Removing a User from your Queue:" + \
 f"\n\nUsage: {COMMAND_PREFIX}remove <queue position> <island ID (Optional)>" + \
 f"\n\nRemoves a user from <queue position> in your island queue. If <island ID> is provided and you are a server admin you can remove a user from a queue you don't own. Upon removal, a DM is sent to the removed user and the queue is updated, letting in any new users if applicable. Useful if a user forgets to use the {COMMAND_PREFIX}leave command when they're done visiting your island." + \
+"```"
+
+UPDATE="```Updating the Dodo code for your Island:" + \
+f"\n\nUsage: {COMMAND_PREFIX}update <dodo code>" + \
+f"\n\nRestrictions: This command must be DM'd to the bot (to hide the Dodo code from other users). " + \
+f"\n\nUpdates the <dodo code> for an island the user owns. Messages users that are allowed on the new <dodo code>." + \
 "```"
 
 JOIN="```Joining an Island Queue:" + \

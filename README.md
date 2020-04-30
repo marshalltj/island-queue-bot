@@ -1,5 +1,5 @@
 # Animal Crossing Island Queue Manager Discord Bot
-### Version 1.1.0
+### Version 1.2.0
 Dropping a Dodo code in a discord full of bell-hungry turnip traders is a surefire way to have everyone involved be stuck in loading screens. This Discord bot was made to help ease the pain of letting a long line of players on to your island.
 
 An island owner can send a direct-message the bot with their Dodo Code to create a queue. The bot creates a unique ID that other users can use to join a queue to get messaged the Dodo Code when it's their turn to join. Once finished, the user leaves the queue using a command and the next user in line gets the Dodo Code messaged to them.
@@ -22,6 +22,7 @@ This bot prefixes all commands with '!', but this can be easily changed in [help
   - [Create](#create)
   - [Close](#close)
   - [Remove](#remove)
+  - [Update](#update)
 - [Participating in an Island Queue](#participating-in-an-island-queue)
   - [Join](#join)
   - [Leave](#leave)
@@ -85,6 +86,22 @@ This bot prefixes all commands with '!', but this can be easily changed in [help
 >**Description**:
 >
 >Removes a user from an island queue that the an island owner owns. If an `<island id>` is provided and the user sending the command is an admin, removes a user from the specified island. Upon removal, a DM is sent to the removed user informing them that they were removed. Sends the next user in line the `<dodo code>` via DM if the removed user was allowed on the island at the time of their removal.
+
+### Update
+>**Usage**: `!update <dodo code>`
+>
+>**Example**: `!update ZP5K7`
+>> Updates the Dodo code for the user's island to ZP5K7.
+>
+>**Arguments**:
+>- `<dodo code>`: The new Dodo code.
+>
+>**Restrictions**:
+>- This command can only be issued through a DM, though the bot will print an error message if an island owner tries to execute it in a channel.
+>
+>**Description**:
+>
+>Updates an owner's island to have a new `<dodo code>`. All users that are currently allowed on the island will be messaged the new `<dodo code>`. 
 
 ## Participating in an Island Queue
 
