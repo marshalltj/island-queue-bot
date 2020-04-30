@@ -3,7 +3,7 @@ Animal Crossing New Horizons Island Queue Discord Bot
 Author: Marshall Jankovsky
 github.com/marshalltj/island-queue-bot
 
-Version: 1.1.0
+Version: 2.0.0
 
 island.py contains a class Island that tracks information about an island queue. 
 """
@@ -13,12 +13,13 @@ from visitor import Visitor
 #Class that contains information about an island queue.
 #Members: <owner : discord.User> <price : int> <code : str> <islandId : str> <queueSize : int> <visitors : [Visitor]>
 class Island:
-    def __init__(self, owner, price, code, islandId, queueSize):
+    def __init__(self, owner, price, islandId, guild):
         self.owner = owner
         self.price = price
-        self.code = code
         self.islandId = islandId
-        self.queueSize = queueSize
+        self.guild = guild
+        self.queueSize = None
+        self.code = None
         self.visitors = []
 
     def getNumVisitors(self):
