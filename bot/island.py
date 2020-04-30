@@ -3,7 +3,7 @@ Animal Crossing New Horizons Island Queue Discord Bot
 Author: Marshall Jankovsky
 github.com/marshalltj/island-queue-bot
 
-Version: 1.1.0
+Version: 1.2.0
 
 island.py contains a class Island that tracks information about an island queue. 
 """

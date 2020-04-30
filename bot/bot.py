@@ -3,7 +3,7 @@ Animal Crossing New Horizons Island Queue Discord Bot
 Author: Marshall Jankovsky
 github.com/marshalltj/island-queue-bot
 
-Version: 1.1.0
+Version: 1.2.0
 
 bot.py is a discord.ext.commands.Bot implementation for setup, connections and commands as well as error handling.
 """
@@ -32,7 +32,7 @@ try:
 except ValueError:
     GENERAL_CHANNEL = None
 
-bot = commands.Bot(command_prefix=helpMessages.COMMAND_PREFIX)
+bot = commands.Bot(command_prefix=helpMessages.COMMAND_PREFIX, case_insensitive=True)
 bot.remove_command('help')
 
 DEBUG = False #flag to disable some restrictions when debugging
@@ -146,14 +146,17 @@ async def closeQueue(ctx, islandId : str = None):
     admin = None
 
     if islandId != None: #admin closure
+        island = getIslandById(islandId[-3:])
+
+        if island == None:
+            await ctx.send(f"{owner.name}, {islandId} is not a valid island ID.")
+            return
+
         if isUserAdmin(owner):
-            island = getIslandById(islandId[-3:])
-            if island == None:
-                await ctx.send(f"{owner.name}, {islandId} is not a valid island ID.")
-                return
             admin = owner
             owner = island.owner
-        else:
+
+        elif island.owner != owner:
             await ctx.send(f"{owner.name}, you don't have permission to close someone else's queue.")
             return
 
@@ -254,6 +257,35 @@ async def removeUser(ctx, position : int, islandId: str = None):
 
         newVisitor.setTimestamp()
         print("Messaging", newVisitor.user, "to allow them on island ID", island.islandId, "user queue position:", island.getUserPositionInQueue(newVisitor.user) + 1)
+
+#Command to update a dodo code for an Island. Messages users who were allowed on the new code.
+#Paramters: <ctx : discord.ext.commands.Context> <code : str>
+@commands.dm_only()
+@bot.command(name='update')
+async def updateQueue(ctx, code):
+    owner = ctx.message.author
+    island = getIslandByOwner(owner)
+
+    if island == None:
+        await ctx.send(f"{owner}, you do not have any open islands.")
+        return
+
+    island.code = code
+
+    if island.getNumVisitors() < island.queueSize:
+        dmLen = island.getNumVisitors()
+    else:
+        dmLen = island.queueSize
+
+    await ctx.send(f"{owner}, your Dodo code has been updated to {island.islandId}. {dmLen} users will be messaged with the updated code.")
+    print("Updated Dodo code for island", island.islandId, "Messaging", dmLen, "users updated dodo code for island.")
+
+    for i in range(dmLen):
+        visitor = island.visitors[i].user
+        await visitor.create_dm()
+        await visitor.dm_channel.send(
+            f"Hello {visitor.name}, {owner} has updated their Dodo code. Use {island.code} to visit their island instead of the previous code. Remember to use '{helpMessages.COMMAND_PREFIX}leave {island.islandId}' when you're done and off their island."
+        )
 
 #Command to add a Visitor to an Island
 #Paramters: <ctx : discord.ext.commands.Context> <islandId : str> <trips : int>
@@ -428,6 +460,15 @@ async def removeError(ctx, error):
     else:
         raise
 
+@updateQueue.error
+async def updateError(ctx, error):
+    if isinstance(error, commands.PrivateMessageOnly):
+        await ctx.send("Update can only be exectued by directly messaging the bot - please create a new dodo code and try again by messaging this bot directly.")
+    elif isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send(f"Looks like you're missing the new Dodo code - use '{helpMessages.COMMAND_PREFIX}update <dodo code>'")
+    else:
+        raise
+
 @joinQueue.error
 async def joinError(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
@@ -464,6 +505,9 @@ async def leaveError(ctx, error):
 #Paramters <ctx : discord.ext.commands.Context> <com : str>
 @bot.command()
 async def help(ctx, com : str = None):
+    if com != None:
+        com = com.lower()
+
     if com == None:
         helpStr = helpMessages.MENU
 
@@ -475,6 +519,9 @@ async def help(ctx, com : str = None):
 
     elif com == "remove":
         helpStr = helpMessages.REMOVE
+
+    elif com == "update":
+        helpStr = helpMessages.UPDATE
 
     elif com == "join":
         helpStr = helpMessages.JOIN
