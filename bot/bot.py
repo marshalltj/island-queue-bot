@@ -23,21 +23,10 @@ from server import Server
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN') #bot token
 
-try:
-    TURNIP_CHANNEL = int(os.getenv('TURNIP_CHANNEL')) #id of the channel you want it to send turnip queue messages to
-except ValueError:
-    TURNIP_CHANNEL = None
-
-try:
-    GENERAL_CHANNEL = int(os.getenv('GENERAL_CHANNEL')) #id of the channel you want it to send normal queue messages to
-except ValueError:
-    GENERAL_CHANNEL = None
-
 bot = commands.Bot(command_prefix=helpMessages.COMMAND_PREFIX)
 bot.remove_command('help')
 
-DEBUG = False #flag to disable some restrictions when debugging
-ISLANDS = [] #global list containing all active island queues - SUNSET THIS
+DEBUG = True #flag to disable some restrictions when debugging
 SERVERS = [] #global list containing all guilds the bot is connected to
 
 #---Helper Funtions---#
@@ -68,7 +57,7 @@ def getIslandById(islandId):
             if island.islandId == islandId:
                 return island  
 
-#Searches a <server> for an Island with an <islandId>
+#Searches a <server> for an Island with an <islandId> - DEPRECATED?
 #Parameters: <islandId : str> <server : Server>
 #Returns the Island or None if not found
 def getIslandByIdInServer(islandId, server):
@@ -88,8 +77,8 @@ def createIslandId():
 #Checks if a <user> has admin permissions in <guild>
 #Paramters: <user : discord.User> <guild : discord.Guild>
 #Returns: True if the user has admin permissions, False otherwise
-def isUserAdmin(user):
-    member = bot.guilds[0].get_member(user.id)
+def isUserAdmin(user, guild):
+    member = guild.get_member(user.id)
     if member == None:   
         return False
 
@@ -99,14 +88,13 @@ def isUserAdmin(user):
 
     return False
 
-#Creates a Server object and adds it to the list of servers if it's not already in the list
+#Creates a Server object and adds it to the list of servers if it's not already in the list - DEPRACATE, use getServerByGuild instead
 #Parameters: <guild : discord.Guild>
 def addServer(guild):
     for server in SERVERS:
         if server.guild == guild:
             return 
     SERVERS.append(Server(guild))
-
 
 #Gets the Server associated with a <guild>
 #Parameters: <guild : discord.Guild>
@@ -137,11 +125,8 @@ async def on_guild_join(guild):
 #When bot leaves a guild, remove that guild from the list of servers
 @bot.event
 async def on_guild_remove(guild):
-    for server in SERVERS:
-        if server.guild == guild:
-            print("Bot removed from server", guild)
-            SERVERS.remove(server)
-            return 
+    print("Bot removed from server", guild)
+    SERVERS.remove(getServerByGuild(guild))
 
 #---Managing Queue Commands---#
 
@@ -151,18 +136,18 @@ async def on_guild_remove(guild):
 @bot.command(name='create')
 async def createIsland(ctx, price: int = None):
     owner = ctx.message.author
-    guild = ctx.guild
+    server = getServerByGuild(guild)
 
-    island = getIslandByOwner(owner)
+    island = getIslandByOwnerInServer(owner, server)
+
     if island != None:
         if island.code != None:
-            await ctx.send(f"{owner.display_name}, please close your current queue before opening another.")
+            await ctx.send(f"{owner.display_name}, please use '{helpMessages.COMMAND_PREFIX}close' before opening another or '{helpMessages.COMMAND_PREFIX}update' to update it.")
         else:
-            await ctx.send("{owner.display_name}, you have already created an island. DM this bot with {helpMessages.COMMAND_PREFIX}open <dodo code> to open a queue for your island.")
+            await ctx.send(f"{owner.display_name}, you have already created an island. DM this bot with {helpMessages.COMMAND_PREFIX}open <dodo code> to open a queue for your island.")
         return
 
-    server = getServerByGuild(guild)
-    server.islands.append(Island(owner, price, createIslandId(), guild))
+    server.islands.append(Island(owner, price, createIslandId(), ctx.guild))
 
     newIsland = getIslandByOwnerInServer(owner, server)
 
@@ -188,13 +173,19 @@ async def openQueue(ctx, code, queueSize : int = 3):
         return
 
     if island.code != None:
-        await ctx.send(f"You already have an open queue. Use {helpMessages.COMMAND_PREFIX}close to close it.")
+        await ctx.send(f"You already have an open queue. Use '{helpMessages.COMMAND_PREFIX}close' to close it or '{helpMessages.COMMAND_PREFIX}update' to update it.")
+        return
+
+    if queueSize < 1 or queueSize > 7:
+        await ctx.send("Please provide a valid queue size (1-7).")
         return
 
     island.queueSize = queueSize
     island.code = code
+
     server = getServerByGuild(island.guild)
-    await ctx.send(f"Your island queue is now open. Users can join the queue using {helpMessages.COMMAND_PREFIX}join {island.islandId}.")
+
+    await ctx.send(f"Your island queue is now open. Users can join the queue using '{helpMessages.COMMAND_PREFIX}join {island.islandId}'.")
     print("Opening the queue for island", island.islandId, "on server", island.guild)
 
     if island.price != None:
@@ -215,22 +206,19 @@ async def openQueue(ctx, code, queueSize : int = 3):
 
 #Command that deletes an Island object from the list of ISLANDS
 #Parameters: <islandId : str>
-@commands.guild_only()
 @bot.command(name='close')
 async def closeQueue(ctx, islandId : str = None):
     owner = ctx.message.author
-    server = getServerByGuild(ctx.guild)
-    island = getIslandByOwnerInServer(owner, server)
     admin = None
 
     if islandId != None: 
-        island = getIslandByIdInServer(islandId, server)
+        island = getIslandById(islandId)
 
         if island == None:
             await ctx.send(f"{owner.name}, {islandId} is not a valid island ID.")
             return
 
-        if isUserAdmin(owner):
+        if isUserAdmin(owner, island.guild):
             admin = owner
             owner = island.owner
 
@@ -238,12 +226,16 @@ async def closeQueue(ctx, islandId : str = None):
             await ctx.send(f"{owner.name}, you don't have permission to close someone else's queue.")
             return
 
-    if island == None:
-        await ctx.send(f"{owner.name}, you have no open queues.")
-        return
-    
+    else:
+        island = getIslandByOwner(owner)
+
+        if island == None:
+            await ctx.send(f"{owner.name}, you have no open queues.")
+            return
+
+    server = getServerByGuild(island.guild)
     removedIslandID = island.islandId
-    islandPrice = island.price
+    removedIslandPrice = island.price
 
     if admin != None:
         closedStr = f"{admin.name} has closed {owner.name}'s island queue."
@@ -256,21 +248,21 @@ async def closeQueue(ctx, islandId : str = None):
         for i in range(island.getNumVisitors()):
             closedStr += f"\n{i+1}: {island.visitors[i].user.name}"
     
-    ISLANDS.remove(island)
+    server.islands.remove(island)
 
     #check if island was successfully deleted
-    if getIslandByOwner(owner) != None:
+    if getIslandByOwnerInServer(owner, server) != None:
         await ctx.send(f"Failed to close queue for {owner.name}")
         print("Failed to delete island queue for", owner, "id:", removedIslandID)
         return
 
     #determine which channel to send closed message to
-    if islandPrice != None:
-        if TURNIP_CHANNEL != None and ctx.message.channel.id != TURNIP_CHANNEL:
-            await bot.get_channel(TURNIP_CHANNEL).send(closedStr)
+    if removedIslandPrice != None:
+        if server.turnipChannel != None and ctx.message.channel.id != server.turnipChannel:
+            await bot.get_channel(server.turnipChannel).send(closedStr)
 
-    elif GENERAL_CHANNEL != None and ctx.message.channel.id != GENERAL_CHANNEL:
-        await bot.get_channel(GENERAL_CHANNEL).send(closedStr)
+    elif server.generalChannel != None and ctx.message.channel.id != server.generalChannel:
+        await bot.get_channel(server.generalChannel).send(closedStr)
 
     await ctx.send(closedStr)
 
@@ -289,14 +281,17 @@ async def removeUser(ctx, position : int, islandId: str = None):
     idx = position - 1
 
     if islandId != None: #admin removal 
-        if isUserAdmin(owner):
-            island = getIslandById(islandId[-3:])
-            if island == None:
-                await ctx.send(f"{owner.name}, {islandId} is not a valid island ID.")
-                return
-        else:
-            await ctx.send(f"{owner.name}, you don't have permission to remove someone else from a queue.")
+        island = getIslandById(islandId[-4:])
+
+        if island == None:
+            await ctx.send(f"{owner.name}, {islandId} is not a valid island ID.")
             return
+
+        server = getServerByGuild(island.guild)
+
+        if isUserAdmin(owner, server) == False and island.owner != owner:
+            await ctx.send(f"{owner.name}, you don't have permission to remove someone else from a queue.")
+            return            
 
     else:
         island = getIslandByOwner(owner)
@@ -305,7 +300,7 @@ async def removeUser(ctx, position : int, islandId: str = None):
             return
 
     if idx < 0 or idx >= island.getNumVisitors():
-        await ctx.send(f"{position} is not a valid position in the queue. Use {helpMessages.COMMAND_PREFIX}queue island{island.islandId} to see who's in line currently.")
+        await ctx.send(f"{position} is not a valid position in the queue. Use {helpMessages.COMMAND_PREFIX}list {island.islandId} to see who's in line currently.")
         return
 
     removedUser = island.popVisitor(idx).user 
@@ -327,12 +322,10 @@ async def removeUser(ctx, position : int, islandId: str = None):
     #message next user in line the dodo code
     if idx < island.queueSize and island.getNumVisitors() >= island.queueSize:
         newVisitor = island.visitors[island.queueSize-1]
-
         await newVisitor.user.create_dm()
         await newVisitor.user.dm_channel.send(
-            f"Hello {newVisitor.user.name}, it's your turn to go to {island.owner.name}'s island! Use the Dodo code '{island.code}' to fly, and be sure to leave the queue with '{helpMessages.COMMAND_PREFIX}leave island{island.islandId}' once you are done and completely off the island."
+            f"Hello {newVisitor.user.name}, it's your turn to go to {island.owner.name}'s island! Use the Dodo code '{island.code}' to fly, and be sure to leave the queue with '{helpMessages.COMMAND_PREFIX}leave {island.islandId}' once you are done and completely off the island."
         )
-
         newVisitor.setTimestamp()
         print("Messaging", newVisitor.user, "to allow them on island ID", island.islandId, "user queue position:", island.getUserPositionInQueue(newVisitor.user) + 1)
 
@@ -343,7 +336,7 @@ async def removeUser(ctx, position : int, islandId: str = None):
 @bot.command(name='join')
 async def joinQueue(ctx, islandId, trips : int = 0):
     user = ctx.message.author
-    island = getIslandById(islandId[-3:])
+    island = getIslandById(islandId[-4:])
 
     if island == None:
         await ctx.send(f"{user.name}, {islandId} is not a valid island ID.")
@@ -368,14 +361,14 @@ async def joinQueue(ctx, islandId, trips : int = 0):
         print("Failed to add", user, "to island", island.id)
         return
 
-    print("User", user, "has joined the queue for island", island.islandId, "in position", queuePosition + 1, "out of", island.getNumVisitors())
+    print("User", user, "has joined the queue for island", island.islandId, "in position", queuePosition + 1)
     await ctx.send(f"{user.name}, you have been added to the queue for {island.owner.name}'s island and are currently in position {queuePosition + 1}. A DM will be sent to you from this bot with the Dodo code when it's your turn to visit the island.")
 
     #message user the dodo code if allowed on the island
     if queuePosition < island.queueSize:
         await user.create_dm()
         await user.dm_channel.send(
-            f"Hello {user.name}, it's your turn to go to {island.owner.name}'s island! Use the Dodo code '{island.code}' to fly, and be sure to leave the queue with '{helpMessages.COMMAND_PREFIX}leave island{island.islandId}' once you are done and completely off the island."
+            f"Hello {user.name}, it's your turn to go to {island.owner.name}'s island! Use the Dodo code '{island.code}' to fly, and be sure to leave the queue with '{helpMessages.COMMAND_PREFIX}leave {island.islandId}' once you are done and completely off the island."
         )
         print("Messaging", user, "to allow them on island ID", island.islandId, "user queue position:", island.getUserPositionInQueue(user) + 1)
 
@@ -384,7 +377,7 @@ async def joinQueue(ctx, islandId, trips : int = 0):
 @bot.command(name='leave')
 async def leaveQueue(ctx, islandId):
     user = ctx.message.author
-    island = getIslandById(islandId[-3:])
+    island = getIslandById(islandId[-4:])
 
     if island == None:
         await ctx.send(f"{user.name}, {islandId} is not a valid island ID.")
@@ -412,7 +405,7 @@ async def leaveQueue(ctx, islandId):
         newVisitor = island.visitors[island.queueSize-1]
         await newVisitor.user.create_dm()
         await newVisitor.user.dm_channel.send(
-            f"Hello {newVisitor.user.name}, it's your turn to go to {island.owner.name}'s island! Use the Dodo code '{island.code}' to fly, and be sure to leave the queue with '{helpMessages.COMMAND_PREFIX}leave island{island.islandId}' once you are done and completely off the island."
+            f"Hello {newVisitor.user.name}, it's your turn to go to {island.owner.name}'s island! Use the Dodo code '{island.code}' to fly, and be sure to leave the queue with '{helpMessages.COMMAND_PREFIX}leave {island.islandId}' once you are done and completely off the island."
         )
         newVisitor.setTimestamp()
         print("Messaging", newVisitor.user, "to allow them on island ID", island.islandId, "user queue position:", island.getUserPositionInQueue(newVisitor.user) + 1)
@@ -420,7 +413,7 @@ async def leaveQueue(ctx, islandId):
 @bot.command(name='dodo')
 async def sendDodoCode(ctx, islandId):
     user = ctx.message.author
-    island = getIslandById(islandId[-3:])
+    island = getIslandById(islandId[-4:])
 
     if island == None:
         await ctx.send(f"{user.name}, {islandId} is not a valid island ID.")
@@ -437,79 +430,85 @@ async def sendDodoCode(ctx, islandId):
         return
 
     await user.create_dm()
-    await user.dm_channel.send(f"The Dodo code for {island.owner.name}'s island is '{island.code}'. Be sure to leave the queue with '{helpMessages.COMMAND_PREFIX}leave island{island.islandId}' once you are done and completely off the island.")
-    print("Messaging", user, "Dodo code for island id", island.islandId, "via !dodo command")
+    await user.dm_channel.send(f"The Dodo code for {island.owner.name}'s island is '{island.code}'. Be sure to leave the queue with '{helpMessages.COMMAND_PREFIX}leave {island.islandId}' once you are done and completely off the island.")
 
 #--- General Commands ---#
 
-#Command to display information about an Island as well as each Visitor on the Island
+#Lists all the islands for a Server or all the users for one in a queue if an ID is provided.
 #Parameters: <ctx : discord.ext.commands.Context> <islandId : str>
-@bot.command(name='queue')
-async def listQueue(ctx, islandId):
-    island = getIslandById(islandId[-3:])
+@bot.command(name='list')
+async def listInfo(ctx, islandId):
+    if islandId.lower() == "all":
 
-    if island == None:
-        await ctx.send(f"{ctx.message.author.name}, {islandId} is not a valid island ID.")
-        return
+        if ctx.guild == None:  
+            await ctx.send("To list all the islands for a server, call this command from a server.")
+            return
 
-    queue = f"```Owner: {island.owner.name} | ID: {islandId}"
+        server = getServerByGuild(ctx.guild)
 
-    if island.price != None:
-        queue+= f" | Bell Price: {island.price}"
+        islandStr = f"Currently {len(server.islands)} open."
 
-    queue += f" | Users in queue: {island.getNumVisitors()}\n{island.queueSize} users allowed on this island at a time."
+        if len(server.islands) > 0:
+            islandStr += "\n\n```"
+            for island in server.islands:
+                islandStr += f"\nOwner: {island.owner.name} | ID: island{island.islandId}"
 
-    if island.getNumVisitors() > 0:
-        queue += f"\n------------------------------"
-        for i in range(island.getNumVisitors()):
-            if i == island.queueSize:
-                queue += "\n------------------------------"
-            queue += f"\n{i + 1}: {island.visitors[i].user.name}    {island.visitors[i].trips} trips"
-            if i < island.queueSize:
-                queue += f"    {island.visitors[i].getTimeSpent()} minutes"
+                if island.price != None:
+                    islandStr += f" | Bell Price: {island.price}" 
 
-    queue += f"```\n\nUse '{helpMessages.COMMAND_PREFIX}join {islandId} <number of trips>' to join this queue."
+                islandStr += f" | Users in queue: {island.getNumVisitors()}"
 
-    await ctx.send(queue)
+            islandStr += f"```\n\nIsland there that isn't open? Tell the owner to use '{helpMessages.COMMAND_PREFIX}close' to close their island."
+        islandStr += f"\nCreate a queue for your own island by using '{helpMessages.COMMAND_PREFIX}create <dodo code>'"
+        await ctx.send(islandStr)
 
-#Command to list all Islands in ISLANDS and information about them
-@bot.command(name='islands')
-async def listIslands(ctx):
-    islandStr = f"Currently {len(ISLANDS)} open."
+    else:
 
-    if len(ISLANDS) > 0:
-        islandStr += "\n\n```"
-        for island in ISLANDS:
-            islandStr += f"\nOwner: {island.owner.name} | ID: island{island.islandId}"
+        island = getIslandById(islandId[-4:])
 
-            if island.price != None:
-                islandStr += f" | Bell Price: {island.price}" 
+        if island == None:
+            await ctx.send(f"{ctx.message.author.name}, {islandId} is not a valid island ID.")
+            return
 
-            islandStr += f" | Users in queue: {island.getNumVisitors()}"
+        queue = f"```Owner: {island.owner.name} | ID: {islandId}"
 
-        islandStr += f"```\n\nIsland there that isn't open? Tell the owner to use '{helpMessages.COMMAND_PREFIX}close' to close their island."
-    islandStr += f"\nCreate a queue for your own island by messaging this bot '{helpMessages.COMMAND_PREFIX}create <dodo code>'"
-    await ctx.send(islandStr)
+        if island.price != None:
+            queue+= f" | Bell Price: {island.price}"
+
+        queue += f" | Users in queue: {island.getNumVisitors()}\n{island.queueSize} users allowed on this island at a time."
+
+        if island.getNumVisitors() > 0:
+            queue += f"\n------------------------------"
+            for i in range(island.getNumVisitors()):
+                if i == island.queueSize:
+                    queue += "\n------------------------------"
+                queue += f"\n{i + 1}: {island.visitors[i].user.name}    {island.visitors[i].trips} trips"
+                if i < island.queueSize:
+                    queue += f"    {island.visitors[i].getTimeSpent()} minutes"
+
+        queue += f"```\n\nUse '{helpMessages.COMMAND_PREFIX}join {islandId} <number of trips>' to join this queue."
+
+        await ctx.send(queue)
 
 #--- Server Admin Commands ---#
 
 @commands.has_guild_permissions(administrator=True)
-@bot.command(name='setTurnipChannel')
-async def setTurnipChannel(ctx):
-    server = getServerByGuild(ctx.guild)
+@bot.command(name='setChannel')
+async def setChannel(ctx, channel):
+    channel = channel.lower()
 
-    server.turnipChannel = ctx.channel.id
+    if channel == "turnip":
+        server = getServerByGuild(ctx.guild)
+        server.turnipChannel = ctx.channel.id
+        await ctx.send(f"Turnip Channel set to {ctx.channel}.")
 
-    await ctx.send(f"Turnip Channel set to {ctx.channel}.")
+    elif channel == "general":
+        server = getServerByGuild(ctx.guild)
+        server.generalChannel = ctx.channel.id
+        await ctx.send(f"General Channel set to {ctx.channel}.")
 
-@commands.has_guild_permissions(administrator=True)
-@bot.command(name='setGeneralChannel')
-async def setGeneralChannel(ctx):
-    server = getServerByGuild(ctx.guild)
-
-    server.generalChannel = ctx.channel.id
-
-    await ctx.send(f"General Channel set to {ctx.channel}.")
+    else:
+        await ctx.send(f"{channel} is not a valid channel. Use '{helpMessages.COMMAND_PREFIX}setChannel turnip/general'.")
 
 #--- Bot Owner Commands ---#
 
@@ -531,8 +530,6 @@ async def listServers(ctx):
 async def createError(ctx, error):
     if isinstance(error, commands.BadArgument):
         await ctx.send(f"Looks like you didn't give a number for the <price> - use an integer like '500', don't type it out 'five-hundred'.")
-    elif isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(f"Looks like you're missing an argument - use '{helpMessages.COMMAND_PREFIX}help create' to see usage.")
     elif isinstance(error, commands.NoPrivateMessage):
         await ctx.send("This command can't be called in a DM.")
     else:
@@ -554,7 +551,7 @@ async def removeError(ctx, error):
     if isinstance(error, commands.BadArgument):
         await ctx.send("Looks like you didn't give a number for the position - use an integer like '4', don't type it out.")
     elif isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(f"Looks like you're missing an argument - use '{helpMessages.COMMAND_PREFIX}remove <position>'")
+        await ctx.send(f"Looks like you're missing an argument - use '{helpMessages.COMMAND_PREFIX}remove <position> <islandId (Optional)>'")
     else:
         raise
 
@@ -581,10 +578,19 @@ async def dodoError(ctx, error):
     else:
         raise
 
-@listQueue.error
-async def leaveError(ctx, error):
+@listInfo.error
+async def listError(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(f"Looks like you're missing an argument - use '{helpMessages.COMMAND_PREFIX}queue <island ID>'")
+        await ctx.send(f"Looks like you're missing an argument - use '{helpMessages.COMMAND_PREFIX}list <island ID>'")
+    else:
+        raise
+
+@setChannel.error
+async def setChannelError(ctx, error):
+    if isinstance(error, commands.NoPrivateMessage):
+        await ctx.send("This command can't be called in a DM.")
+    elif isinstance(error, commands.MissingPermissions):
+        await ctx.send("You don't have admin permissions on this server.")
     else:
         raise
 
