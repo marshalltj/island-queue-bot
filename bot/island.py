@@ -8,6 +8,7 @@ Version: 2.0.0
 island.py contains a class Island that tracks information about an island queue. 
 """
 
+import datetime
 from visitor import Visitor
 
 #Class that contains information about an island queue.
@@ -20,6 +21,7 @@ class Island:
         self.guild = guild
         self.queueSize = None
         self.code = None
+        self.timestamp = datetime.datetime.now()
         self.visitors = []
 
     def getNumVisitors(self):
@@ -43,3 +45,6 @@ class Island:
             if self.visitors[i].user == user:
                 return i
         return -1
+
+    def getAge(self):
+        return divmod((datetime.datetime.now() - self.timestamp).seconds, 3600)[0]
