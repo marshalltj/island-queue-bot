@@ -552,6 +552,35 @@ async def updateQueue(ctx, attribute, value):
 
 #--- Participating in Queue Commands ---#
 
+#Command to update a dodo code for an Island. Messages users who were allowed on the new code.
+#Paramters: <ctx : discord.ext.commands.Context> <code : str>
+@commands.dm_only()
+@bot.command(name='update')
+async def updateQueue(ctx, code):
+    owner = ctx.message.author
+    island = getIslandByOwner(owner)
+
+    if island == None:
+        await ctx.send(f"{owner}, you do not have any open islands.")
+        return
+
+    island.code = code
+
+    if island.getNumVisitors() < island.queueSize:
+        dmLen = island.getNumVisitors()
+    else:
+        dmLen = island.queueSize
+
+    await ctx.send(f"{owner}, your Dodo code has been updated to {island.islandId}. {dmLen} users will be messaged with the updated code.")
+    print("Updated Dodo code for island", island.islandId, "Messaging", dmLen, "users updated dodo code for island.")
+
+    for i in range(dmLen):
+        visitor = island.visitors[i].user
+        await visitor.create_dm()
+        await visitor.dm_channel.send(
+            f"Hello {visitor.name}, {owner} has updated their Dodo code. Use {island.code} to visit their island instead of the previous code. Remember to use '{helpMessages.COMMAND_PREFIX}leave {island.islandId}' when you're done and off their island."
+        )
+
 #Command to add a Visitor to an Island
 #Paramters: <ctx : discord.ext.commands.Context> <islandId : str> <trips : int>
 @bot.command(name='join')
@@ -792,6 +821,15 @@ async def removeError(ctx, error):
 async def updateError(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.send(f"Looks like you're missing an argument - Use '{helpMessages.COMMAND_PREFIX}update dodo/price/size <value>'.")
+    else:
+        raise
+
+@updateQueue.error
+async def updateError(ctx, error):
+    if isinstance(error, commands.PrivateMessageOnly):
+        await ctx.send("Update can only be exectued by directly messaging the bot - please create a new dodo code and try again by messaging this bot directly.")
+    elif isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send(f"Looks like you're missing the new Dodo code - use '{helpMessages.COMMAND_PREFIX}update <dodo code>'")
     else:
         raise
 
