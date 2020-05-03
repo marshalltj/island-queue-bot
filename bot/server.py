@@ -42,7 +42,7 @@ class Server:
 		db.close()
 		self.turnipChannel = channelId
 
-	def setTurnipChannel(self, channelId, db):
+	def setGeneralChannel(self, channelId, db):
 		cursor = db.cursor()
 
 		sql = f"UPDATE Servers SET GeneralChannel = {channelId} WHERE ID = {self.guild.id}"
