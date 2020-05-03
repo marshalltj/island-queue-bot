@@ -42,17 +42,17 @@ This bot prefixes all commands with '!island'.
 >>Creates an ID for your island that users can visit once it's opened and lets users know your `<bell price>` is 550.
 >
 >**Arguments**:
->- `<bell price>`: Used to determine if it should alert users in the `TURNIP_CHANNEL` that an island has been opened.
+>- `<bell price>`: Used to determine if it should alert users in the turnipChannel that an island has been opened.
 >
 >**Restrictions**:
->- An island owner can only have own one Island.
+>- An island owner can only have own one island.
 >- This command can't be sent in a DM.
 >
 >**Description**:
 >
->Creates an Island for the owner. A unique 3-digit ID is assigned to it that will be used to identify it to users when executing commands like `!island join` or `!island queue` once the queue for the Island is opened using `!island open`.
+>Creates an island object for the owner. A unique 4-digit ID is assigned to it that will be used to identify it to users when executing commands like `!island join` or `!island queue` once the queue for the island is opened using `!island open`.
 >
->If `<bell price>` is provided, the bot will message the Server's turnipChannel instead of the generalChannel once the island is open.
+>If `<bell price>` is provided, the bot will message the server's turnipChannel instead of the generalChannel once the island is open.
 
 ### Open
 >**Usage**: `!island open <dodo code> <queue size (Optional)>`
@@ -60,12 +60,16 @@ This bot prefixes all commands with '!island'.
 >**Example**: `island open QZ04P 5`
 >>Creates a queue for the owner's island that users can visit with `<dodo code>` QZ04P and a `<queue size>` that allows 5 users on at once.
 >
+>**Arguments**:
+>- `<dodo code>`: The Dodo code user's can use to visit the island.
+>- `<queue size>`: The number of users allowed on an island at a time (default 3).
+>
 >**Restrictions**:
 >- This command must be sent to the bot in a Direct Message.
 >
 >**Description**:
 >
->Opens the Island Queue to allow users to join it and visit the owner's Island. Upon successful opening, a message is broadcast to the Server's configured channels. If no `<queue size>` is provided a default of 3 is set.
+>Opens an island queue to allow users to join it and visit the owner's island. Upon successful opening, a message is broadcast to the server's configured channels. If no `<queue size>` is provided a default of 3 is set.
 
 ### Close
 >**Usage**: `!island close <island id (Optional/Admin Only)>`
@@ -74,11 +78,11 @@ This bot prefixes all commands with '!island'.
 >- `<island id>`: The unique ID of the island to close (server admin only).
 >
 >**Restrictions**:
->- An island owner can only close an island queue they own.
+>- An island owner can only close an island queue they own. Server admins can close islands opened on their server.
 >
 >**Description**:
 >
->Closes the island owner's open queue if they have one. If an `<island id>` is provided and the user sending the command is an admin, closes the specified island. A message will be broadcasted to the Server's generalChannel (or turnipChannel if a `<bell price>` was provided when created) and whatever channel the command was executed from that the island queue has closed. If there were any users left in the queue their usernames are also listed in the order that they were in the queue.
+>Closes the island owner's open queue if they have one. If an `<island id>` is provided and the user sending the command is an admin, this command closes the specified island. A message will be broadcasted to the server's generalChannel (or turnipChannel if a `<bell price>` was provided when created) and whatever channel the command was executed from that the island queue has closed. If there were any users left in the queue their usernames are also listed in the order that they were in the queue.
 
 ### Remove
 >**Usage**: `!island remove <position> <island id (Optional/Admin Only)>`
@@ -88,14 +92,14 @@ This bot prefixes all commands with '!island'.
 >
 >**Arguments**:
 >- `<position>`: The position in the queue of the user to be removed.
->- `<island id>`: The unique ID of the island to remove a user from (Server admin only).
+>- `<island id>`: The unique ID of the island to remove a user from (server admin only).
 >
 >**Restrictions**:
 >- An island owner can only remove users from an island queue they own. Server admins can remove a user from any open island.
 >
 >**Description**:
 >
->Removes a user from an island queue that the an island owner owns. If an `<island id>` is provided and the user sending the command is an admin, removes a user from the specified island. Upon removal, a DM is sent to the removed user informing them that they were removed. Sends the next user in line the `<dodo code>` via DM if the removed user was allowed on the island at the time of their removal.
+>Removes a user from an island queue that the an island owner owns. If an `<island id>` is provided and the user sending the command is an admin, this command removes a user from the specified island. Upon removal, a DM is sent to the removed user informing them that they were removed. Sends the next user in line the `<dodo code>` via DM if the removed user was allowed on the island at the time of their removal.
 
 ### Update
 >**Usage**: `!island update <"dodo"/"size"/"price"> <updated value>`
@@ -103,10 +107,10 @@ This bot prefixes all commands with '!island'.
 >**Examples**:
 >
 > `!island update dodo ZP5K7`
->> Updates the Dodo code for the user's Island to ZP5K7.
+>> Updates the Dodo code for the user's island to ZP5K7.
 >
 > `!island update size 5`
->> Updates the queue size for the user's Island to 5
+>> Updates the queue size for the user's island to 5.
 >
 >**Arguments**:
 >- `<"dodo"/"size"/"price">`: Which property to update.
@@ -117,7 +121,7 @@ This bot prefixes all commands with '!island'.
 >
 >**Description**:
 >
->Updates various properties for and Island. If the property is a dodo code, all users that are currently allowed on the island will be messaged the new dodo code. If the queue size (`<size>`) is updated to be smaller, users who were previously allowed on will be messaged to be asked to leave the island until the bot messages them again. If the size is larger the bot will message any new users that are now allowed on.
+>Updates various properties for and island. If the property is `<dodo>`, all users that are currently allowed on the island will be messaged the new dodo code. If the queue size (`<size>`) is updated to be smaller, users who were previously allowed on will be messaged to be asked to leave the island until the bot messages them again. If the size is larger the bot will message any new users that are now allowed on.
 
 ## Participating in an Island Queue
 
@@ -129,6 +133,7 @@ This bot prefixes all commands with '!island'.
 >
 >**Arguments**:
 >- `<island id>`: The unique ID of the island queue to join.
+>- `<number of trips>`: The number of trips the user plans to make to the island.
 >
 >**Restrictions**:
 >- A user can only join an island queue if they are not already in it.
@@ -173,10 +178,10 @@ This bot prefixes all commands with '!island'.
 >**Examples**:
 >
 >`!island list`
->> List all the open islands on the Server the command is called from.
+>> List all the open islands on the server the command is called from.
 >
 >`!island list 3721`
->> Lists the users in the queue for an Island with an `<island id>` of 3721.
+>> Lists the users in the queue for an island with an `<island id>` of 3721.
 >
 >**Arguments**:
 >- `<island id>`: The unique ID of the island queue to display.
@@ -186,7 +191,7 @@ This bot prefixes all commands with '!island'.
 >
 >**Description**:
 >
->Prints a list of all open island queues along with their owner, bell price (if applicable), and number of current users in the queue. If an `<island id>` is provided, it lists all the users in the queue. Users allowed on will have their time spent displayed.
+>Prints a list of all open island queues along with their owner, bell price (if applicable), and number of current users in the queue in a server. If an `<island id>` is provided, it lists all the users in the queue. Users allowed on will have their time spent displayed.
 
 ### Help
 >**Usage**: `!help <command (Optional)>`
@@ -213,12 +218,12 @@ This bot prefixes all commands with '!island'.
 >- `<"turnip"/"general">` - Which broadcast channel to update.
 >
 >**Restrictions**:
->- Only Server Admins can use the command.
+>- Only server admins can use the command.
 >- This command can't be sent in a DM.
 >
 >**Description**:
 >
->Sets the broadcast channels for a server. These channels are used when island queue is opened or closed. While these channels don't have to be set it is recommended that they are. The generalChannel and turnipChannel can be set to the same channel.
+>Sets the broadcast channels for a server. These channels are used when island queue is opened or closed. While these channels don't have to be set it is recommended that they are. The generalChannel and turnipChannel can be the same.
 
 ### Timeout
 >**Usage**: `!island timeout <minutes>`
@@ -230,9 +235,9 @@ This bot prefixes all commands with '!island'.
 >- `<minutes>` - The number of minutes a user is allowed on an island.
 >
 >**Restrictions**:
->- Only Server Admins can use the command.
+>- Only server admins can use the command.
 >- This command can't be sent in a DM.
 >
 >**Description**:
 >
->Sets the amount of time a user is allowed to be on an island. Every 5 minutes the bot cleans users who have spent too much time on an island and automatically removes them from island queues. This property is by default set to 30 for each Server.
+>Sets the amount of time a user is allowed to be on an island. Every 5 minutes the bot cleans users who have spent too much time on an island and automatically removes them from island queues. This property is by default set to 30 for each server.
