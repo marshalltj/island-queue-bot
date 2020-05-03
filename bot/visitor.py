@@ -3,7 +3,7 @@ Animal Crossing New Horizons Island Queue Discord Bot
 Author: Marshall Jankovsky
 github.com/marshalltj/island-queue-bot
 
-Version: 1.2.0
+Version: 2.0.0
 
 visitor.py contains a class Visitor that connects a discord.User to a datetime object of when they join a queue for an Island
 """
