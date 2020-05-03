@@ -125,7 +125,8 @@ async def clean():
     await bot.wait_until_ready()
 
     while True:
-        logging.info("Starting Island/User clean.")
+        if DEBUG == True:
+            logging.info("Starting Island/User clean.")
         for server in SERVERS:
             for island in server.islands:
 
@@ -174,8 +175,8 @@ async def clean():
                         if i < island.queueSize and island.getNumVisitors() >= island.queueSize:
                             await messageUser(island.visitors[island.queueSize-1], island)
 
-        logging.info("Finished Island/User clean.")
         if DEBUG == True:
+            logging.info("Finished Island/User clean.")
             await asyncio.sleep(150)
         else:
             await asyncio.sleep(300) #run every 5 min
@@ -552,35 +553,6 @@ async def updateQueue(ctx, attribute, value):
 
 #--- Participating in Queue Commands ---#
 
-#Command to update a dodo code for an Island. Messages users who were allowed on the new code.
-#Paramters: <ctx : discord.ext.commands.Context> <code : str>
-@commands.dm_only()
-@bot.command(name='update')
-async def updateQueue(ctx, code):
-    owner = ctx.message.author
-    island = getIslandByOwner(owner)
-
-    if island == None:
-        await ctx.send(f"{owner}, you do not have any open islands.")
-        return
-
-    island.code = code
-
-    if island.getNumVisitors() < island.queueSize:
-        dmLen = island.getNumVisitors()
-    else:
-        dmLen = island.queueSize
-
-    await ctx.send(f"{owner}, your Dodo code has been updated to {island.islandId}. {dmLen} users will be messaged with the updated code.")
-    print("Updated Dodo code for island", island.islandId, "Messaging", dmLen, "users updated dodo code for island.")
-
-    for i in range(dmLen):
-        visitor = island.visitors[i].user
-        await visitor.create_dm()
-        await visitor.dm_channel.send(
-            f"Hello {visitor.name}, {owner} has updated their Dodo code. Use {island.code} to visit their island instead of the previous code. Remember to use '{helpMessages.COMMAND_PREFIX}leave {island.islandId}' when you're done and off their island."
-        )
-
 #Command to add a Visitor to an Island
 #Paramters: <ctx : discord.ext.commands.Context> <islandId : str> <trips : int>
 @bot.command(name='join')
@@ -786,6 +758,16 @@ async def listServers(ctx):
         serverStr += "```"
     await ctx.send(serverStr)
 
+@commands.is_owner()
+@bot.command(name='debug')
+async def setDebug(ctx):
+    if DEBUG == False:
+        DEBUG == True
+        await ctx.send("DEBUG flag set from False to True.")
+    else:
+        DEBUG == False
+        await ctx.send("DEBUG flag set from True to False.")
+
 #--Error Handling---#    
 
 @createIsland.error
@@ -881,6 +863,7 @@ async def setTimeoutError(ctx, error):
         raise
 
 @listServers.error
+@setDebug.error
 async def listServersError(ctx, error):
     if isinstance(error, commands.NotOwner):
         await ctx.send("Only the owner of the bot can call this command.")
