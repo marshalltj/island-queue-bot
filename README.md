@@ -1,5 +1,5 @@
 # Animal Crossing Island Queue Manager Discord Bot
-### Version 1.2.0
+### Version 2.0.0
 Dropping a Dodo code in a discord full of bell-hungry turnip traders is a surefire way to have everyone involved be stuck in loading screens. This Discord bot was made to help ease the pain of letting a long line of players on to your island.
 
 An island owner can send a direct-message the bot with their Dodo Code to create a queue. The bot creates a unique ID that other users can use to join a queue to get messaged the Dodo Code when it's their turn to join. Once finished, the user leaves the queue using a command and the next user in line gets the Dodo Code messaged to them.
