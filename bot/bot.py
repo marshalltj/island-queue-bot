@@ -716,7 +716,7 @@ async def listInfo(ctx, islandId : str = None):
 #--- Server Admin Commands ---#
 
 @commands.has_guild_permissions(administrator=True)
-@bot.command(name='setChannel')
+@bot.command(name='channel')
 async def setChannel(ctx, channel):
     channel = channel.lower()
     server = getServerByGuild(ctx.guild)
@@ -733,7 +733,7 @@ async def setChannel(ctx, channel):
         await ctx.send(f"{channel} is not a valid channel. Use '{helpMessages.COMMAND_PREFIX}setChannel turnip/general'.")
 
 @commands.has_guild_permissions(administrator=True)
-@bot.command(name='setTimeout')
+@bot.command(name='timeout')
 async def setTimeout(ctx, time : int):
     server = getServerByGuild(ctx.guild)
 
@@ -746,7 +746,7 @@ async def setTimeout(ctx, time : int):
 #--- Bot Owner Commands ---#
 
 @commands.is_owner()
-@bot.command(name='listServers')
+@bot.command(name='servers')
 async def listServers(ctx):
     serverStr = f"Currently connected to {len(SERVERS)}."
 
@@ -855,17 +855,26 @@ async def listServersError(ctx, error):
 #Paramters <ctx : discord.ext.commands.Context> <com : str>
 @bot.command()
 async def help(ctx, com : str = None):
+    if com != None:
+        com = com.lower()
+
     if com == None:
         helpStr = helpMessages.MENU
 
     elif com == "create":
         helpStr = helpMessages.CREATE
 
+    elif com == "open":
+        helpStr = helpMessages.OPEN
+
     elif com == "close":
         helpStr = helpMessages.CLOSE
 
     elif com == "remove":
         helpStr = helpMessages.REMOVE
+
+    elif com == "update":
+        helpStr = helpMessages.UPDATE
 
     elif com == "join":
         helpStr = helpMessages.JOIN
@@ -876,11 +885,14 @@ async def help(ctx, com : str = None):
     elif com == "dodo":
         helpStr = helpMessages.DODO
 
-    elif com == "islands":
-        helpStr = helpMessages.ISLANDS
+    elif com == "list":
+        helpStr = helpMessages.LIST
 
-    elif com == "queue":
-        helpStr = helpMessages.QUEUE
+    elif com == "channel":
+        helpStr = helpMessages.CHANNEL
+
+    elif com == "timeout":
+        helpStr = helpMessages.TIMEOUT
 
     else:
         helpStr = f"{com} is not a valid command. Use '{helpMessages.COMMAND_PREFIX}help' to list this bot's available commands."
