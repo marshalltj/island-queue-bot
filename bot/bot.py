@@ -22,7 +22,7 @@ from dotenv import load_dotenv
 from island import Island
 from server import Server
 
-DEBUG = True #flag to disable some restrictions when debugging
+DEBUG = False #flag to disable some restrictions when debugging
 
 #---Env/Constants setup---#
 load_dotenv()
