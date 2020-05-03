@@ -7,19 +7,18 @@ An island owner can send a direct-message the bot with their Dodo Code to create
 Island owners can choose the number of users they want to let in at a given time (the bot defaults to three) as well as provide a Turnip price to let users know what their buy/sell prices are.
 
 **Table of Contents**
+- [Adding the Bot to your Server](#adding-the-bot-to-your-server)
 - [Commands](#commands)
-- [Installing the Bot](#installing-the-bot)
-  - [Create your Bot on Discord](#create-your-bot-on-discord)
-  - [Add the Bot to your Server](#add-the-bot-to-your-server)
-  - [Running the Bot Locally](#running-the-bot-locally)
-  - [Hosting the Bot on Heroku](#hosting-the-bot-on-heroku)
+
+# Adding the Bot to your Server
 
 # Commands
-This bot prefixes all commands with '!', but this can be easily changed in [helpMessages.py](bot/helpMessages.py).
+This bot prefixes all commands with '!island'.
 
 **Commands Quicklinks**
 - [Managing an Island Queue](#managing-an-island-queue)
   - [Create](#create)
+  - [Open](#open)
   - [Close](#close)
   - [Remove](#remove)
   - [Update](#update)
@@ -28,37 +27,48 @@ This bot prefixes all commands with '!', but this can be easily changed in [help
   - [Leave](#leave)
   - [Dodo](#remove)
 - [General Commands](#general-commands)
-  - [Island](#island)
-  - [Queue](#queue)
+  - [List](#list)
   - [Help](#help)
+- [Server Admin Commands](#server-admin-commands)
+  - [Channel](#channel)
+  - [Timeout](#timeout)
 
 ## Managing an Island Queue
 
 ### Create
->**Usage**: `!create <dodo code> <bell price (Optional)> <queue size (Optional)>`
+>**Usage**: `!island create <bell price (Optional)>`
 >
->**Example**: `!create Q05ZA 550 4`
->>Creates a queue for your island that users can visit with `<dodo code>` Q05ZA, lets users know your `<bell price>` is 550 and a `<queue size>` that allows 4 users on at a time.
+>**Example**: `!island create 550`
+>>Creates an ID for your island that users can visit once it's opened and lets users know your `<bell price>` is 550.
 >
 >**Arguments**:
->- `<dodo code>`: The dodo code for the island.
 >- `<bell price>`: Used to determine if it should alert users in the `TURNIP_CHANNEL` that an island has been opened.
->- `<queue_size>`: Used to set the number of concurrent users allowed on an island at a time. Valid values are 1-7. Defaults to 3.
 >
 >**Restrictions**:
->- An island owner can only have one queue open at a time.
->- This command can only be issued through a DM, though the bot will print an error message if an island owner tries to execute it in a channel.
+>- An island owner can only have own one Island.
+>- This command can't be sent in a DM.
 >
 >**Description**:
 >
->Creates a queue for an island owner and broadcasts a message to the `GENERAL_CHANNEL` and whatever channel the command was executed from that a queue has been created with instructions on how to join. A unique 3-digit ID is assigned to it that will be used to identify it to users when executing commands like `!join` or `!queue`.
+>Creates an Island for the owner. A unique 3-digit ID is assigned to it that will be used to identify it to users when executing commands like `!island join` or `!island queue` once the queue for the Island is opened using `!island open`.
 >
->If `<bell price>` is provided, the bot will look at the current day to determine if it's a sell or buy day and message the `TURNIP_CHANNEL` instead of the `GENERAL_CHANNEL`.
+>If `<bell price>` is provided, the bot will message the Server's turnipChannel instead of the generalChannel once the island is open.
+
+### Open
+>**Usage**: `!island open <dodo code> <queue size (Optional)>`
 >
->If you want to provide a `<queue size>` but no `<bell price>`, as long as your `<queue size>` is valid (1-7) simply enter it as the second argument - IE: `!create DODO 5`.
+>**Example**: `island open QZ04P 5`
+>>Creates a queue for the owner's island that users can visit with `<dodo code>` QZ04P and a `<queue size>` that allows 5 users on at once.
+>
+>**Restrictions**:
+>- This command must be sent to the bot in a Direct Message.
+>
+>**Description**:
+>
+>Opens the Island Queue to allow users to join it and visit the owner's Island. Upon successful opening, a message is broadcast to the Server's configured channels. If no `<queue size>` is provided a default of 3 is set.
 
 ### Close
->**Usage**: `!close <island id (Optional/Admin Only)>`
+>**Usage**: `!island close <island id (Optional/Admin Only)>`
 >
 >**Arguments**:
 >- `<island id>`: The unique ID of the island to close (server admin only).
@@ -68,17 +78,17 @@ This bot prefixes all commands with '!', but this can be easily changed in [help
 >
 >**Description**:
 >
->Closes the island owner's open queue if they have one. If an `<island id>` is provided and the user sending the command is an admin, closes the specified island. A message will be broadcasted to the `GENERAL_CHANNEL` (or `TURNIP_CHANNEL` if a `<bell price>` was provided when created) and whatever channel the command was executed from that the island queue has closed. If there were any users left in the queue their usernames are also listed in the order that they were in the queue.
+>Closes the island owner's open queue if they have one. If an `<island id>` is provided and the user sending the command is an admin, closes the specified island. A message will be broadcasted to the Server's generalChannel (or turnipChannel if a `<bell price>` was provided when created) and whatever channel the command was executed from that the island queue has closed. If there were any users left in the queue their usernames are also listed in the order that they were in the queue.
 
 ### Remove
->**Usage**: `!remove <position> <island id (Optional/Admin Only)>`
+>**Usage**: `!island remove <position> <island id (Optional/Admin Only)>`
 >
->**Example**: `!remove 2`
+>**Example**: `!island remove 2`
 >> Removes the second user in line (`<position>`) from your island queue.
 >
 >**Arguments**:
 >- `<position>`: The position in the queue of the user to be removed.
->- `<island id>`: The unique ID of the island to remove a user from (server admin only).
+>- `<island id>`: The unique ID of the island to remove a user from (Server admin only).
 >
 >**Restrictions**:
 >- An island owner can only remove users from an island queue they own. Server admins can remove a user from any open island.
@@ -88,28 +98,34 @@ This bot prefixes all commands with '!', but this can be easily changed in [help
 >Removes a user from an island queue that the an island owner owns. If an `<island id>` is provided and the user sending the command is an admin, removes a user from the specified island. Upon removal, a DM is sent to the removed user informing them that they were removed. Sends the next user in line the `<dodo code>` via DM if the removed user was allowed on the island at the time of their removal.
 
 ### Update
->**Usage**: `!update <dodo code>`
+>**Usage**: `!island update <"dodo"/"size"/"price"> <updated value>`
 >
->**Example**: `!update ZP5K7`
->> Updates the Dodo code for the user's island to ZP5K7.
+>**Examples**:
+>
+> `!island update dodo ZP5K7`
+>> Updates the Dodo code for the user's Island to ZP5K7.
+>
+> `!island update size 5`
+>> Updates the queue size for the user's Island to 5
 >
 >**Arguments**:
->- `<dodo code>`: The new Dodo code.
+>- `<"dodo"/"size"/"price">`: Which property to update.
+>- `<updated value>`: The value of the updated property.
 >
 >**Restrictions**:
->- This command can only be issued through a DM, though the bot will print an error message if an island owner tries to execute it in a channel.
+>- If `<dodo>` is the property to update, this command can only be issued through a DM.
 >
 >**Description**:
 >
->Updates an owner's island to have a new `<dodo code>`. All users that are currently allowed on the island will be messaged the new `<dodo code>`. 
+>Updates various properties for and Island. If the property is a dodo code, all users that are currently allowed on the island will be messaged the new dodo code. If the queue size (`<size>`) is updated to be smaller, users who were previously allowed on will be messaged to be asked to leave the island until the bot messages them again. If the size is larger the bot will message any new users that are now allowed on.
 
 ## Participating in an Island Queue
 
 ### Join
->**Usage**: `!join <island id> <number of trips (Optional)>`
+>**Usage**: `!island join <island id> <number of trips (Optional)>`
 >
->**Example**: `!join 327 2`
->> Joins the queue for an island with a unique `<island id>` of 327 and lets other users know you plan on taking 2 trips (`<number of trips>`).
+>**Example**: `!island join 3271 2`
+>> Joins the queue for an island with a unique `<island id>` of 3271 and lets other users know you plan on taking 2 trips (`<number of trips>`).
 >
 >**Arguments**:
 >- `<island id>`: The unique ID of the island queue to join.
@@ -124,10 +140,10 @@ This bot prefixes all commands with '!', but this can be easily changed in [help
 >If the user is already in the island queue, a message will be printed that states their position in the queue.
 
 ### Leave
->**Usage**: `!leave <island id>`
+>**Usage**: `!island leave <island id>`
 >
->**Example**: `!leave 327`
->> Removes you from the queue for an island with a unique `<island id>` of 327.
+>**Example**: `!island leave 3271`
+>> Removes you from the queue for an island with a unique `<island id>` of 3271.
 >
 >**Arguments**:
 >- `<island id>`: The unique ID of the island queue to leave.
@@ -137,39 +153,40 @@ This bot prefixes all commands with '!', but this can be easily changed in [help
 >Removes the user from an island queue they've joined. If the user leaves and this action makes room on the island to allow another user, a DM will be sent to the next user in line that contains the island's `<dodo code>`.
 
 ### Dodo
->**Usage**: `!dodo <island id>`
+>**Usage**: `!island dodo <island id>`
 >
->**Example**: `!dodo 327`
->> Has the bot message you the dodo code for an island with a unique `<island id>` of 327 if it's your turn to visit the island.
+>**Example**: `!island dodo 3271`
+>> Has the bot message you the dodo code for an island with a unique `<island id>` of 3271 if it's your turn to visit the island.
 >
 >**Arguments**:
 >- `<island id>`: The unique ID of the island queue to get the dodo code for.
 >
 >**Description**:
 >
->Messages the user with the dodo code for an island if it's their turn to visit. Useful if there are any issues with messaging or if the user previously didn't allow messages from bots.
+>Messages the user with the dodo code for an island if it's their turn to visit. Useful if there are any issues with messaging or if the user previously didn't allow messages from the bot.
 
 ## General Commands
 
-### Islands
->**Usage**: `!islands`
+### List
+>**Usage**: `!island list <island id (Optional)>`
 >
->**Description**:
+>**Examples**:
 >
->Prints a list of all open island queues along with their owner, bell price (if applicable), and number of current users in the queue.
-
-### Queue
->**Usage**: `!queue <island id>`
+>`!island list`
+>> List all the open islands on the Server the command is called from.
 >
->**Example**: `!queue 327`
->> Displays information about and all users currently in the queue for an island with a unique `<island id>` of 327.
+>`!island list 3721`
+>> Lists the users in the queue for an Island with an `<island id>` of 3721.
 >
 >**Arguments**:
 >- `<island id>`: The unique ID of the island queue to display.
 >
+>**Restrictions**:
+>- If no `<island id>` is provided, this command must be called in a server.
+>
 >**Description**:
 >
->Prints the users in an island queue along with the owner, bell price (if applicable), and number of current users in the queue along with the number of trips they plan on taking. Users currently allowed on the island will be demarcated with a frame around them and their time spent being allowed on the island in minutes will be shown next to their name.
+>Prints a list of all open island queues along with their owner, bell price (if applicable), and number of current users in the queue. If an `<island id>` is provided, it lists all the users in the queue. Users allowed on will have their time spent displayed.
 
 ### Help
 >**Usage**: `!help <command (Optional)>`
@@ -184,68 +201,38 @@ This bot prefixes all commands with '!', but this can be easily changed in [help
 >
 >Prints a list of available commands and a brief description. If `<command>` if provided, prints more in-depth descriptions on what the command does.
 
-# Installing the Bot
-This bot is coded to manage a single server, so you will need to install it yourself to use it.
+## Server Admin Commands
 
-## Create your Bot on Discord
-- Go to [the Discord Developer Portal](https://discordapp.com/developers/applications) and create a new application.
-- Navigate to the "Bot" tab in your application
-- Press the "Add Bot" button.
+### Channel
+>**Usage**: `!island channel <"turnip"/"general">`
+>
+>**Example**: `!island channel turnip`
+>> Sets the turnip queue broadcast channel to the channel this was called from.
+>
+>**Arguments**:
+>- `<"turnip"/"general">` - Which broadcast channel to update.
+>
+>**Restrictions**:
+>- Only Server Admins can use the command.
+>- This command can't be sent in a DM.
+>
+>**Description**:
+>
+>Sets the broadcast channels for a server. These channels are used when island queue is opened or closed. While these channels don't have to be set it is recommended that they are. The generalChannel and turnipChannel can be set to the same channel.
 
-## Add the Bot to your Server
-- In your bot application, navigate to the "OAuth2" tab.
-- In the "Scopes" table, select "bot".
-- In the "Permissions" table, select "View Channels" and "Send Messages".
-- Copy the link at the bottom of the "Scopes" table and open it.
-- Follow the prompts to add the bot to a server you manage.
-
-## Running the Bot Locally
-- Clone this repository locally and navigate to the [bot](bot/) folder in your command line.
-- Fill in the values in your [.env](bot/.env) file - these values should be directly pasted after the `=` with no additional characters.
-   - `DISCORD_TOKEN` is your bot's token.
-      > You can get your bot's token from the [the Discord Developer Portal](https://discordapp.com/developers/applications) by opening your bot application, navigating to the "Bot" tab and copying the "Token". **DO NOT** share this token or post it anywhere publicly.
-
-   - `TURNIP_CHANNEL` is the channel ID the bot will post messages about island queues that were created with a `<bell price>` included.
-      >You can get the ID for a Discord channel by changing your settings to developer mode in User Settings -> Appearance -> Enable Developer Mode
-
-   - `GENERAL_CHANNEL` is the channel ID the bot will post messages about island queues that did not include a `<bell price>`.
-      >If you want the bot to only post to one channel, simply set both `TURNIP_CHANNEL` and `GENERAL_CHANNEL` to the same ID. You can also leave these fields blank but it's not advised.
-
-- Install discord.py and dotenv with [pip](https://realpython.com/what-is-pip/):
-
-      pip install -U discord.py
-      pip install -U python-dotenv
-
-- Run the bot (requires Python 3.6 or greater):
-
-      python bot.py
-
-You should now see the bot come online on your server! Note that this is just locally running the bot, so if you close your command line or computer the bot will go offline. I recommend hosting the bot on a cloud server - see the next section for insturctions on how to do that.
-
-## Hosting the Bot on [Heroku](https://id.heroku.com/login)
-There are many different hosting options, I was able to host my instance of the bot just fine using [Heroku](https://id.heroku.com/login) and the setup is pretty easy. I've also provided files to interface with Herou's pipeline in the [herokuPipelineFiles](herokuPipelineFiles/) directory. Follow the instructions in the [Running the Bot Locally](#running-the-bot-locally) and then continue here.
-
-### Setting up the Bot Application on Heroku
-- Create an account on [Heroku](https://id.heroku.com/login).
-- Create a new app called "island-queue-bot".
-- Navigate to your application settings and press the "Add buildpack" button.
-- Select the Python buildpack and Save changes.
-
-### Setting up the Heroku Git Repository
-- Download and install the [Heroku CLI](https://devcenter.heroku.com/articles/heroku-command-line).
-
-- Create a new directory outside of the cloned island-queue-bot BitBucket repository and run the following commands:
-
-      heroku login
-      heroku git:clone -a island-queue-bot
-
-  > If you named your application on heroku something else use that instead of `island-queue-bot`.
-
-- Navigate back to the BitBucket repository and copy everything from your [bot](/bot) and [herokuPipelineFiles](/herokuPipelineFiles) to the new Heroku Git repository.
-
-- Add and commit all the files (don't forget .env) and push using:
-
-      git push heroku master
-
-### Running the Bot on Heroku
-Once it's finished installing on the command line, go back to your application on the Heroku website and go to the "Resources" tab for your app. You'll see a slider with a price to the right of it and a pencil icon. Click the pencil icon then turn the slider on to start running your bot.
+### Timeout
+>**Usage**: `!island timeout <minutes>`
+>
+>**Example**: `!island timeout 45`
+>> Sets the timeout period for users to be allowed on an island to 45 minutes.
+>
+>**Arguments**:
+>- `<minutes>` - The number of minutes a user is allowed on an island.
+>
+>**Restrictions**:
+>- Only Server Admins can use the command.
+>- This command can't be sent in a DM.
+>
+>**Description**:
+>
+>Sets the amount of time a user is allowed to be on an island. Every 5 minutes the bot cleans users who have spent too much time on an island and automatically removes them from island queues. This property is by default set to 30 for each Server.
