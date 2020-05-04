@@ -8,13 +8,15 @@ Version: 2.0.0
 server.py holds information about a discord guild and its associated island queues. 
 """
 
+#Class that contains information about a discord guild (server)
+#Members: <guild : discord.Guild> <islands : [Island]> <turnipChannel : int> <generalChannel : int> <timeout : int>
 class Server:
 	def __init__(self, guild, db):
 		self.guild = guild
 		self.islands = []
 
 		cursor = db.cursor()
-
+		#Read the information about the server from the DB in case bot crashes/restarts to preserve information
 		sql = f"SELECT TurnipChannel, GeneralChannel, Timeout FROM Servers WHERE ID = {guild.id}"
 
 		cursor.execute(sql)

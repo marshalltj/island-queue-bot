@@ -22,8 +22,6 @@ from dotenv import load_dotenv
 from island import Island
 from server import Server
 
-DEBUG = False #flag to disable some restrictions when debugging
-
 #---Env/Constants setup---#
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN') #bot token
@@ -32,9 +30,13 @@ DB_USER = os.getenv('DB_USER') #database user
 DB_PW = os.getenv('DB_PW') #database password
 DB_NAME = os.getenv('DB_NAME') #database name
 
+DEBUG = False #flag to disable some restrictions when debugging
+SERVERS = [] #global list containing all guilds the bot is connected to
+
 bot = commands.Bot(command_prefix=helpMessages.COMMAND_PREFIX, case_insensitive=True)
 bot.remove_command('help')
 
+#---Logging Setup---#
 logFileName = '../logs/' + str(datetime.now().strftime('%m_%d_%y_%I_%M')) + '.log'
 if DEBUG:  
     logFileName = "../logs/log.log"
@@ -42,8 +44,6 @@ logging.basicConfig(format='%(asctime)s: %(message)s', filename=logFileName, fil
 console = logging.StreamHandler()
 console.setLevel(logging.ERROR)
 logging.getLogger("").addHandler(console)
-
-SERVERS = [] #global list containing all guilds the bot is connected to
 
 #---Helper Funtions---#
 
@@ -83,7 +83,7 @@ def createIslandId():
         return createIslandId()
 
 #Checks if a <user> has admin permissions in <guild>
-#Paramters: <user : discord.User> <guild : discord.Guild>
+#Parameters: <user : discord.User> <guild : discord.Guild>
 #Returns: True if the user has admin permissions, False otherwise
 def isUserAdmin(user, guild):
     member = guild.get_member(user.id)
@@ -98,11 +98,14 @@ def isUserAdmin(user, guild):
 
 #Gets the Server associated with a <guild>
 #Parameters: <guild : discord.Guild>
+#Returns: the Server or None if not found
 def getServerByGuild(guild):
     for server in SERVERS:
         if server.guild == guild:
             return server
 
+#Creates an SQL connection for modifying the databse for storing Server information
+#Returns: The SQL connection
 def sqlConnection():
     return mysql.connector.connect(
             host=DB_HOST,
@@ -111,6 +114,8 @@ def sqlConnection():
             database=DB_NAME
         )
 
+#Messages a user when they're allowed to visit an Island with the dodo code
+#Parameters: <visitor: Visitor> <island Island>
 async def messageUser(visitor, island):
     await visitor.user.create_dm()
     await visitor.user.dm_channel.send(
@@ -121,6 +126,7 @@ async def messageUser(visitor, island):
 
 #---Backround Tasks---#
 
+#Task that runs every 5 minutes and clears out any Islands older than 10 hrs and any Visitors who have overstayed their welcome on an Island
 async def clean():
     await bot.wait_until_ready()
 
@@ -184,7 +190,7 @@ async def clean():
 #---Events---#
 
 #on_ready override
-#When the bot spins up, log information about the server it's connected to.
+#When the bot spins up, load server properties from database
 @bot.event
 async def on_ready():
     logging.info(f"{bot.user} is up and running.\nConnected to {len(bot.guilds)} servers")
@@ -212,7 +218,8 @@ async def on_ready():
             SERVERS.append(Server(guild, sqlConnection()))
 
 #on_guild_join override
-#When bot joins a guild, add that guild to the list of servers
+#When bot joins a guild, add that guild to the list of servers and add the Server to the database
+#Parameters: <guild : discord.Guild>
 @bot.event
 async def on_guild_join(guild):
     if getServerByGuild(guild) == None:
@@ -238,7 +245,8 @@ async def on_guild_join(guild):
         logging.info(f"Bot added to server {guild}.")
 
 #on_guild_remove override
-#When bot leaves a guild, remove that guild from the list of servers
+#When bot leaves a guild, remove that guild from the list of servers and delete its info from the database.
+#Parameters: <guild : discord.Guild>
 @bot.event
 async def on_guild_remove(guild):
     db = sqlConnection()
@@ -325,6 +333,7 @@ async def openQueue(ctx, code, queueSize : int = 3):
     )
     logging.info(f"Opening the queue for island {island.islandId} on server {island.guild}.")
 
+    #figure out which channel to broadcast that the island queue is now open
     if island.price != None:
         if server.turnipChannel != None:
             await bot.get_channel(server.turnipChannel).send(
@@ -343,6 +352,7 @@ async def closeQueue(ctx, islandId : str = None):
     owner = ctx.message.author
     admin = None
 
+    #id provided, probably an admin closure
     if islandId != None: 
         island = getIslandById(islandId)
 
@@ -412,8 +422,8 @@ async def removeUser(ctx, position : int, islandId: str = None):
     owner = ctx.message.author
     idx = position - 1
 
-    if islandId != None: #admin removal 
-        island = getIslandById(islandId[-4:])
+    if islandId != None: #admin removal probably
+        island = getIslandById(islandId)
 
         if island == None:
             await ctx.send(f"{owner.name}, {islandId} is not a valid island ID.")
@@ -455,8 +465,8 @@ async def removeUser(ctx, position : int, islandId: str = None):
     if idx < island.queueSize and island.getNumVisitors() >= island.queueSize:
         await messageUser(island.visitors[island.queueSize-1], island)
 
-#Command to update a dodo code for an Island. Messages users who were allowed on the new code.
-#Paramters: <ctx : discord.ext.commands.Context> <code : str>
+#Command to update members of an Island.
+#Paramters: <ctx : discord.ext.commands.Context> <attribute : str> <value : str>
 @bot.command(name='update')
 async def updateQueue(ctx, attribute, value):
     owner = ctx.message.author
@@ -467,6 +477,7 @@ async def updateQueue(ctx, attribute, value):
         await ctx.send(f"{owner.name}, you do not have any open islands.")
         return
 
+    #updating the dodo code
     if attribute == "dodo":
 
         if isinstance(ctx.message.channel, discord.DMChannel) == False:
@@ -489,6 +500,7 @@ async def updateQueue(ctx, attribute, value):
         )
         logging.info(f"Updated Dodo code for island {island.islandId}. Messaging {dmLen} users updated dodo code for island.")
 
+        #mesage users that are allowed on updated dodo code
         for i in range(dmLen):
             visitor = island.visitors[i].user
             await visitor.create_dm()
@@ -496,6 +508,7 @@ async def updateQueue(ctx, attribute, value):
                 f"Hello {visitor.name}, {owner} has updated their Dodo code. Use {island.code} to visit their island instead of the previous code. Remember to use '{helpMessages.COMMAND_PREFIX}leave {island.islandId}' when you're done and off their island."
             )
 
+    #updating price
     elif attribute == "price":
         try:
             price = int(value)
@@ -510,6 +523,7 @@ async def updateQueue(ctx, attribute, value):
 
         await ctx.send(f"Price updated from {oldPrice} bells to {island.price} bells.")
 
+    #updating queue size
     elif attribute == "size":
         try:
             size = int(value)
@@ -558,7 +572,7 @@ async def updateQueue(ctx, attribute, value):
 @bot.command(name='join')
 async def joinQueue(ctx, islandId, trips : int = 0):
     user = ctx.message.author
-    island = getIslandById(islandId[-4:])
+    island = getIslandById(islandId)
 
     if island == None:
         await ctx.send(f"{user.name}, {islandId} is not a valid island ID.")
@@ -603,7 +617,7 @@ async def joinQueue(ctx, islandId, trips : int = 0):
 @bot.command(name='leave')
 async def leaveQueue(ctx, islandId):
     user = ctx.message.author
-    island = getIslandById(islandId[-4:])
+    island = getIslandById(islandId)
 
     if island == None:
         await ctx.send(f"{user.name}, {islandId} is not a valid island ID.")
@@ -630,10 +644,12 @@ async def leaveQueue(ctx, islandId):
     if queuePosition < island.queueSize and island.getNumVisitors() >= island.queueSize:
         await messageUser(island.visitors[island.queueSize-1], island)
 
+#message the user the dodo code if they're allowed on the Island
+#Paramters: <ctx : discord.ext.commands.Context> <islandId : str>
 @bot.command(name='dodo')
 async def sendDodoCode(ctx, islandId):
     user = ctx.message.author
-    island = getIslandById(islandId[-4:])
+    island = getIslandById(islandId)
 
     if island == None:
         await ctx.send(f"{user.name}, {islandId} is not a valid island ID.")
@@ -662,7 +678,7 @@ async def sendDodoCode(ctx, islandId):
 #Parameters: <ctx : discord.ext.commands.Context> <islandId : str>
 @bot.command(name='list')
 async def listInfo(ctx, islandId : str = None):
-    if islandId == None:
+    if islandId == None: #list all
 
         if ctx.guild == None:  
             await ctx.send(f"To list all the islands for a server, call this command from a server. To list the queue for a specific island, use {helpMessages.COMMAND_PREFIX}list <island id>.")
@@ -686,9 +702,9 @@ async def listInfo(ctx, islandId : str = None):
         islandStr += f"\nCreate a queue for your own island by using '{helpMessages.COMMAND_PREFIX}create'."
         await ctx.send(islandStr)
 
-    else:
+    else: #list one
 
-        island = getIslandById(islandId[-4:])
+        island = getIslandById(islandId)
 
         if island == None:
             await ctx.send(f"{ctx.message.author.name}, {islandId} is not a valid island ID.")
@@ -716,6 +732,8 @@ async def listInfo(ctx, islandId : str = None):
 
 #--- Server Admin Commands ---#
 
+#Sets the channels that the bot broadcasts messages to (updates DB)
+#Parameters: <ctx : discord.ext.commands.Context> <channel : str>
 @commands.has_guild_permissions(administrator=True)
 @bot.command(name='channel')
 async def setChannel(ctx, channel):
@@ -733,6 +751,8 @@ async def setChannel(ctx, channel):
     else:
         await ctx.send(f"{channel} is not a valid channel. Use '{helpMessages.COMMAND_PREFIX}setChannel turnip/general'.")
 
+#Sets how long the users on a server are allowed on an island (updates DB)
+#Parameters: <ctx : discord.ext.commands.Context> <time : int>
 @commands.has_guild_permissions(administrator=True)
 @bot.command(name='timeout')
 async def setTimeout(ctx, time : int):
@@ -746,6 +766,7 @@ async def setTimeout(ctx, time : int):
 
 #--- Bot Owner Commands ---#
 
+#Get a list of servers the bot is connected to
 @commands.is_owner()
 @bot.command(name='servers')
 async def listServers(ctx):
@@ -758,6 +779,7 @@ async def listServers(ctx):
         serverStr += "```"
     await ctx.send(serverStr)
 
+#flip the debug flag
 @commands.is_owner()
 @bot.command(name='debug')
 async def setDebug(ctx):

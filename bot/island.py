@@ -12,7 +12,7 @@ import datetime
 from visitor import Visitor
 
 #Class that contains information about an island queue.
-#Members: <owner : discord.User> <price : int> <code : str> <islandId : str> <queueSize : int> <visitors : [Visitor]>
+#Members: <owner : discord.User> <price : int>  <islandId : str> <guild : discord.Guild> <queueSize : int> <code : str> <timestamp : datetime.datetime> <visitors : [Visitor]>
 class Island:
     def __init__(self, owner, price, islandId, guild):
         self.owner = owner
