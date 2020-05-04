@@ -6,11 +6,16 @@ An island owner can send a direct-message the bot with their Dodo Code to create
 
 Island owners can choose the number of users they want to let in at a given time (the bot defaults to three) as well as provide a Turnip price to let users know what their buy/sell prices are.
 
-**Table of Contents**
-- [Adding the Bot to your Server](#adding-the-bot-to-your-server)
-- [Commands](#commands)
-
 # Adding the Bot to your Server
+To add the bot to your server, simply use [this link](https://discordapp.com/api/oauth2/authorize?client_id=700478877419438152&permissions=3072&scope=bot) and follow the prompts. A custom role will be created for the bot to allow it permissions to view channels and messages and send messages.
+
+There are two things that should be configured once added:
+- The channel the bot will send messages about queues with turnip prices.
+- The channel the bot will send messages about queues without turnip prices.
+
+A server admin can use the [`!island channel`](#channel) to set these. These can both be set to the same channel if desired, and these can be changed at any time.
+
+Users are by default allowed on an island queue for 30 minutes before they are automatically removed, server admins can modify this value with [`!island timeout`](#timeout).
 
 # Commands
 This bot prefixes all commands with '!island'.
