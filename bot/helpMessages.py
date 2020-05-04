@@ -31,7 +31,7 @@ f"\n\nUse {COMMAND_PREFIX}help <command> for more info on a command.\n\nVisit gi
 
 CREATE="```Creating an Island:" + \
 f"\n\nUsage: {COMMAND_PREFIX}create <turnip price (Optional)>" + \
-"\n\nRestrictions: A user can only have one island created." + \
+"\n\nRestrictions: A user can only have one island created. This command must be called in a server." + \
 f"\n\nCreates a unique ID for you island that users can use to join and visit your island. Users can't join until the {COMMAND_PREFIX}open command has been called for the island." + \
 "```" 
 
@@ -58,6 +58,7 @@ f"\n\nUsage: {COMMAND_PREFIX}update <'dodo'/'price'/'size'> <updated value>" + \
 
 JOIN="```Joining an Island Queue:" + \
 f"\n\nUsage: {COMMAND_PREFIX}join <island ID> <number of trips (Optional)>" + \
+f"\n\nRestrictions: This command must be called in a server." + \
 f"\n\nJoin the queue for visiting an island. Once it's your turn to visit the island, the bot will DM you a message with a Dodo code for the island. Using {COMMAND_PREFIX}join when already in a queue will list your position in that queue." + \
 "```"
 
