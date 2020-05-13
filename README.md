@@ -2,7 +2,7 @@
 ### Version 2.0.0
 Dropping a Dodo code in a discord full of bell-hungry turnip traders is a surefire way to have everyone involved be stuck in loading screens. This Discord bot was made to help ease the pain of letting a long line of players on to your island.
 
-An island owner can send a direct-message the bot with their Dodo Code to create a queue. The bot creates a unique ID that other users can use to join a queue to get messaged the Dodo Code when it's their turn to join. Once finished, the user leaves the queue using a command and the next user in line gets the Dodo Code messaged to them.
+An island owner can create a queue and then send a direct-message the bot with their Dodo Code to open it to other users. The bot creates a unique ID that other users can use to join a queue to get messaged the Dodo Code when it's their turn to join. Once finished, the user leaves the queue using a command and the next user in line gets the Dodo Code messaged to them.
 
 Island owners can choose the number of users they want to let in at a given time (the bot defaults to three) as well as provide a Turnip price to let users know what their buy/sell prices are.
 
@@ -13,7 +13,7 @@ There are two things that should be configured once added:
 - The channel the bot will send messages about queues with turnip prices.
 - The channel the bot will send messages about queues without turnip prices.
 
-A server admin can use the [`!island channel`](#channel) to set these. These can both be set to the same channel if desired, and these can be changed at any time.
+A server admin can use [`!island channel`](#channel) to set these. These can both be set to the same channel if desired, and these can be changed at any time.
 
 Users are by default allowed on an island queue for 30 minutes before they are automatically removed, server admins can modify this value with [`!island timeout`](#timeout).
 
@@ -142,6 +142,7 @@ This bot prefixes all commands with '!island'.
 >
 >**Restrictions**:
 >- A user can only join an island queue if they are not already in it.
+>- This command must be called from a server, and users can only join queue's associated with the server it's called from.
 >
 >**Description**:
 >
